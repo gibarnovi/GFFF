@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fishing Bait Calculator</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-gray: #f8f9fa;
+            --medium-gray: #e9ecef;
+            --dark-gray: #495057;
+            --border-radius: 6px;
+            --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --transition: all 0.2s ease;
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--primary-color);
+            background-color: #f5f7fa;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 16px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: var(--box-shadow);
+        }
+
+        button.warning {
+            background-color: var(--accent-color);
+        }
+
+        button.warning:hover {
+            background-color: #c0392b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 20px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--box-shadow);
+        }
+
+        th, td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid var(--medium-gray);
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .product-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .product-header input {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            text-align: center;
+            padding: 2px;
+            border-radius: 3px;
+            width: 100%;
+            max-width: 120px;
+        }
+        
+        .product-header input:focus {
+            outline: none;
+            border-color: white;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .product-header input.product-name {
+            font-weight: 500;
+            font-size: 1em;
+        }
+        
+        .product-header input.product-price {
+            font-size: 13px;
+        }
+
+        .total-row {
+            font-weight: 600;
+            background-color: var(--light-gray);
+        }
+
+        .total-row td {
+            border-top: 2px solid var(--dark-gray);
+        }
+
+        .grand-total {
+            font-size: 1.1em;
+            font-weight: 600;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--box-shadow);
+        }
+
+        .angler-name {
+            font-weight: 500;
+        }
+
+        /* Validation styles */
+        .invalid {
+            border-color: var(--error-color);
+            animation: shake 0.3s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-2px); }
+            40%, 80% { transform: translateX(2px); }
+        }
+
+        /* Hide empty cells */
+        .qty:placeholder-shown, 
+        .angler-total:empty::before, 
+        .product-total-qty:empty::before,
+        #grand-total:empty::before {
+            content: "";
+            color: transparent;
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            background-color: var(--success-color);
+            color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.5s;
+        }
+
+        .toast.error {
+            background-color: var(--error-color);
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            table {
+                font-size: 14px;
+            }
+            
+            th, td {
+                padding: 8px 6px;
+            }
+            
+            input[type="text"], input[type="number"] {
+                padding: 6px;
+                font-size: 13px;
+            }
+            
+            .controls {
+                flex-direction: row;
+                justify-content: center;
+            }
+            
+            button {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                gap: 8px;
+            }
+            
+            button {
+                flex: 1 1 120px;
+            }
+            
+            .product-header {
+                gap: 2px;
+            }
+            
+            .product-header input.product-name {
+                font-size: 12px;
+            }
+            
+            .product-header input.product-price {
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Fishing Bait Calculator</h1>
+    
+    <div class="controls">
+        <button id="save-btn">💾 Save</button>
+        <button id="load-btn">📂 Load</button>
+        <button id="export-csv">📊 Export CSV</button>
+        <button id="export-png">🖼️ Export PNG</button>
+        <button id="reset-btn" class="warning">🔄 Reset</button>
+    </div>
+    
+    <table id="products" aria-label="Fishing Bait Calculator">
+        <thead>
+            <tr>
+                <th scope="col" style="width: 15%; min-width: 100px;">Angler</th>
+                <th scope="col">
+                    <div class="product-header">
+                        <input type="text" class="product-name" value="აპარიში" aria-label="Product name">
+                        <input type="number" min="0" step="0.01" class="product-price" placeholder="Price" required aria-label="Product price">
+                    </div>
+                </th>
+                <th scope="col">
+                    <div class="product-header">
+                        <input type="text" class="product-name" value="მიწა" aria-label="Product name">
+                        <input type="number" min="0" step="0.01" class="product-price" placeholder="Price" required aria-label="Product price">
+                    </div>
+                </th>
+                <th scope="col">
+                    <div class="product-header">
+                        <input type="text" class="product-name" value="ნაკელი" aria-label="Product name">
+                        <input type="number" min="0" step="0.01" class="product-price" placeholder="Price" required aria-label="Product price">
+                    </div>
+                </th>
+                <th scope="col">
+                    <div class="product-header">
+                        <input type="text" class="product-name" value="Additional" aria-label="Product name">
+                        <input type="number" min="0" step="0.01" class="product-price" placeholder="Price" required aria-label="Product price">
+                    </div>
+                </th>
+                <th scope="col" style="width: 12%; min-width: 80px;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><input type="text" class="angler-name" placeholder="Angler 1" value="Angler 1" aria-label="Angler 1 name"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="აპარიში quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="მიწა quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="ნაკელი quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="Additional item quantity"></td>
+                <td class="angler-total" aria-live="polite"></td>
+            </tr>
+            <tr>
+                <td><input type="text" class="angler-name" placeholder="Angler 2" value="Angler 2" aria-label="Angler 2 name"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="აპარიში quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="მიწა quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="ნაკელი quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="Additional item quantity"></td>
+                <td class="angler-total" aria-live="polite"></td>
+            </tr>
+            <tr>
+                <td><input type="text" class="angler-name" placeholder="Angler 3" value="Angler 3" aria-label="Angler 3 name"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="აპარიში quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="მიწა quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="ნაკელი quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="Additional item quantity"></td>
+                <td class="angler-total" aria-live="polite"></td>
+            </tr>
+            <tr>
+                <td><input type="text" class="angler-name" placeholder="Angler 4" value="Angler 4" aria-label="Angler 4 name"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="აპარიში quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="მიწა quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="ნაკელი quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="Additional item quantity"></td>
+                <td class="angler-total" aria-live="polite"></td>
+            </tr>
+            <tr>
+                <td><input type="text" class="angler-name" placeholder="Angler 5" value="Angler 5" aria-label="Angler 5 name"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="აპარიში quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="მიწა quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="ნაკელი quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="Additional item quantity"></td>
+                <td class="angler-total" aria-live="polite"></td>
+            </tr>
+            <tr>
+                <td><input type="text" class="angler-name" placeholder="Angler 6" value="Angler 6" aria-label="Angler 6 name"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="აპარიში quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="მიწა quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="ნაკელი quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="Additional item quantity"></td>
+                <td class="angler-total" aria-live="polite"></td>
+            </tr>
+            <tr>
+                <td><input type="text" class="angler-name" placeholder="Angler 7" value="Angler 7" aria-label="Angler 7 name"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="აპარიში quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="მიწა quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="ნაკელი quantity"></td>
+                <td><input type="number" min="0" placeholder="" class="qty" data-price="" aria-label="Additional item quantity"></td>
+                <td class="angler-total" aria-live="polite"></td>
+            </tr>
+            <tr class="total-row">
+                <td>Total</td>
+                <td class="product-total-qty" aria-live="polite"></td>
+                <td class="product-total-qty" aria-live="polite"></td>
+                <td class="product-total-qty" aria-live="polite"></td>
+                <td class="product-total-qty" aria-live="polite"></td>
+                <td id="grand-total" aria-live="polite"></td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="grand-total">
+        <span>Total to transfer to store:</span>
+        <span id="grand-total-display">0.00₾</span>
+    </div>
+
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    
+    <script>
+        const FishingCalculator = (function() {
+            // Configuration constants
+            const CONFIG = {
+                STORAGE_KEY: 'fishingCalculatorData',
+                DECIMAL_PLACES: 2,
+                CURRENCY_SYMBOL: '₾',
+                PRICE_DECIMAL_PLACES: 2,
+                PRICE_STEP: 0.01,
+                DEFAULT_PRODUCTS: [
+                    { name: 'აპარიში', price: '' },
+                    { name: 'მიწა', price: '' },
+                    { name: 'ნაკელი', price: '' },
+                    { name: 'Additional', price: '' }
+                ],
+                ANGLER_COUNT: 7
+            };
+
+            // DOM Elements cache
+            const elements = {};
+            
+            // State management
+            let state = {
+                products: [],
+                anglers: [],
+                totals: {}
+            };
+
+            // Initialization
+            function init() {
+                cacheDOM();
+                setupEventListeners();
+                initializeState();
+                render();
+            }
+
+            function cacheDOM() {
+                elements.table = document.getElementById('products');
+                elements.tbody = elements.table.querySelector('tbody');
+                elements.grandTotalElement = document.querySelector('.grand-total');
+                elements.saveBtn = document.getElementById('save-btn');
+                elements.loadBtn = document.getElementById('load-btn');
+                elements.exportCsvBtn = document.getElementById('export-csv');
+                elements.exportPngBtn = document.getElementById('export-png');
+                elements.resetBtn = document.getElementById('reset-btn');
+                elements.grandTotalDisplay = document.getElementById('grand-total-display');
+            }
+
+            function setupEventListeners() {
+                elements.table.addEventListener('input', handleInput);
+                elements.saveBtn.addEventListener('click', saveData);
+                elements.loadBtn.addEventListener('click', loadData);
+                elements.exportCsvBtn.addEventListener('click', exportToCSV);
+                elements.exportPngBtn.addEventListener('click', exportToPNG);
+                elements.resetBtn.addEventListener('click', resetCalculator);
+                
+                // Add price input specific handlers
+                document.querySelectorAll('.product-price').forEach(input => {
+                    input.addEventListener('input', function() {
+                        handlePriceInput(this, false);
+                    });
+                    input.addEventListener('blur', function() {
+                        handlePriceInput(this, true);
+                    });
+                });
+            }
+
+            function initializeState() {
+                // Initialize products from DOM
+                const productHeaders = document.querySelectorAll('thead th:not(:first-child):not(:last-child)');
+                state.products = Array.from(productHeaders).map((th, index) => ({
+                    name: th.querySelector('.product-name').value,
+                    price: th.querySelector('.product-price').value.trim() === '' ? '' : parseFloat(th.querySelector('.product-price').value),
+                    totalQty: 0
+                }));
+
+                // Initialize anglers
+                state.anglers = Array.from({ length: CONFIG.ANGLER_COUNT }, (_, i) => ({
+                    name: `Angler ${i + 1}`,
+                    quantities: state.products.map(() => ({
+                        value: '',
+                        price: 0
+                    })),
+                    total: 0
+                }));
+            }
+
+            // Rendering functions
+            function render() {
+                renderProducts();
+                renderAnglers();
+                updateTotals();
+            }
+
+            function renderProducts() {
+                const productHeaders = document.querySelectorAll('thead th:not(:first-child):not(:last-child)');
+                
+                state.products.forEach((product, index) => {
+                    if (productHeaders[index]) {
+                        const nameInput = productHeaders[index].querySelector('.product-name');
+                        const priceInput = productHeaders[index].querySelector('.product-price');
+                        
+                        if (nameInput.value !== product.name) {
+                            nameInput.value = product.name;
+                        }
+                        
+                        const formattedPrice = product.price === '' ? '' : formatNumber(product.price, CONFIG.PRICE_DECIMAL_PLACES);
+                        if (priceInput.value !== formattedPrice) {
+                            priceInput.value = formattedPrice;
+                        }
+
+                        // Update all quantity inputs in this column with current price
+                        document.querySelectorAll(`tbody tr td:nth-child(${index + 2}) input.qty`).forEach(qtyInput => {
+                            qtyInput.dataset.price = product.price || '';
+                        });
+                    }
+                });
+            }
+
+            function renderAnglers() {
+                const rows = elements.tbody.querySelectorAll('tr:not(.total-row)');
+                
+                state.anglers.forEach((angler, rowIndex) => {
+                    if (rows[rowIndex]) {
+                        // Set angler name
+                        const nameInput = rows[rowIndex].querySelector('.angler-name');
+                        nameInput.value = angler.name;
+                        
+                        // Set quantities
+                        angler.quantities.forEach((qty, colIndex) => {
+                            const input = rows[rowIndex].querySelectorAll('.qty')[colIndex];
+                            if (input) {
+                                input.value = qty.value;
+                                input.dataset.price = state.products[colIndex].price || '';
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Calculation functions
+            function calculateAllTotals() {
+                const totals = {
+                    grandTotal: 0,
+                    productTotals: Array(state.products.length).fill(0)
+                };
+
+                // Calculate angler totals and product totals
+                state.anglers.forEach(angler => {
+                    angler.total = 0;
+                    
+                    angler.quantities.forEach((qty, index) => {
+                        const quantity = parseFloat(qty.value) || 0;
+                        const price = parseFloat(qty.price) || 0;
+                        const itemTotal = quantity * price;
+                        
+                        angler.total += itemTotal;
+                        totals.productTotals[index] += quantity;
+                    });
+                    
+                    totals.grandTotal += angler.total;
+                });
+
+                return totals;
+            }
+
+            function updateTotals() {
+                state.totals = calculateAllTotals();
+                
+                // Update angler totals
+                const anglerTotalCells = elements.tbody.querySelectorAll('.angler-total');
+                state.anglers.forEach((angler, index) => {
+                    if (anglerTotalCells[index]) {
+                        anglerTotalCells[index].textContent = angler.total > 0 ? 
+                            formatCurrency(angler.total) : '';
+                    }
+                });
+                
+                // Update product totals
+                const productTotalCells = elements.tbody.querySelectorAll('.product-total-qty');
+                state.totals.productTotals.forEach((total, index) => {
+                    if (productTotalCells[index]) {
+                        productTotalCells[index].textContent = total > 0 ? total : '';
+                    }
+                });
+                
+                // Update grand total
+                const grandTotalCell = document.getElementById('grand-total');
+                grandTotalCell.textContent = state.totals.grandTotal > 0 ? 
+                    formatCurrency(state.totals.grandTotal) : '';
+                
+                elements.grandTotalDisplay.textContent = formatCurrency(state.totals.grandTotal);
+            }
+
+            // Input handling
+            function handleInput(event) {
+                const target = event.target;
+                
+                if (target.classList.contains('qty')) {
+                    handleQuantityInput(target);
+                } else if (target.classList.contains('angler-name')) {
+                    handleNameInput(target);
+                } else if (target.classList.contains('product-name')) {
+                    handleProductNameInput(target);
+                }
+            }
+
+            function handlePriceInput(input, isBlur = false) {
+                const rawValue = input.value.trim();
+                
+                if (rawValue === '') {
+                    input.value = '';
+                    input.classList.remove('invalid');
+                    updateProductData(input);
+                    return;
+                }
+
+                // Allow intermediate input (like "1.") during typing
+                if (!isBlur && /^\d*\.?\d*$/.test(rawValue)) {
+                    input.classList.remove('invalid');
+                    return;
+                }
+
+                const numericValue = parseFloat(rawValue);
+                if (!isNaN(numericValue)) {
+                    input.value = isBlur ? formatNumber(numericValue, CONFIG.PRICE_DECIMAL_PLACES) : rawValue;
+                    input.classList.remove('invalid');
+                    updateProductData(input);
+                } else {
+                    input.classList.add('invalid');
+                }
+                
+                if (isBlur) {
+                    updateTotals();
+                }
+            }
+
+            function handleQuantityInput(input) {
+                // Validate input
+                const value = input.value.trim();
+                const isValid = value === '' || (!isNaN(value) && parseFloat(value) >= 0);
+                
+                input.classList.toggle('invalid', !isValid);
+                
+                if (isValid) {
+                    updateAnglerData(input);
+                    updateTotals();
+                }
+            }
+
+            function handleNameInput(input) {
+                const row = input.closest('tr');
+                const rowIndex = Array.from(row.parentNode.children).indexOf(row);
+                
+                if (rowIndex >= 0) {
+                    state.anglers[rowIndex].name = input.value;
+                }
+            }
+
+            function handleProductNameInput(input) {
+                const th = input.closest('th');
+                const colIndex = Array.from(th.parentNode.children).indexOf(th) - 1;
+                
+                if (colIndex >= 0) {
+                    state.products[colIndex].name = input.value;
+                }
+            }
+
+            function updateAnglerData(input) {
+                const row = input.closest('tr');
+                const rowIndex = Array.from(row.parentNode.children).indexOf(row);
+                const colIndex = Array.from(row.children).indexOf(input.parentNode) - 1; // -1 for name column
+                
+                if (rowIndex >= 0 && colIndex >= 0) {
+                    state.anglers[rowIndex].quantities[colIndex] = {
+                        value: input.value,
+                        price: parseFloat(input.dataset.price) || 0
+                    };
+                }
+            }
+
+            function updateProductData(input) {
+                const th = input.closest('th');
+                const colIndex = Array.from(th.parentNode.children).indexOf(th) - 1; // -1 for name column
+                
+                if (colIndex >= 0) {
+                    const rawValue = input.value.trim();
+                    const price = rawValue === '' ? '' : parseFloat(rawValue);
+                    state.products[colIndex].price = price;
+                    
+                    // Update all quantity inputs in this column
+                    document.querySelectorAll(`tbody tr td:nth-child(${colIndex + 2}) input.qty`)
+                        .forEach(qtyInput => {
+                            qtyInput.dataset.price = price || '';
+                        });
+
+                    state.anglers.forEach(angler => {
+                        if (angler.quantities[colIndex]) {
+                            angler.quantities[colIndex].price = price || 0;
+                        }
+                    });
+                }
+            }
+
+            // Data persistence functions
+            function saveData() {
+                try {
+                    state = getCurrentState();
+                    localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(state));
+                    showToast('Data saved successfully!');
+                } catch (error) {
+                    console.error('Save error:', error);
+                    showToast('Failed to save data', 'error');
+                }
+            }
+
+            function loadData() {
+                try {
+                    const savedData = localStorage.getItem(CONFIG.STORAGE_KEY);
+                    if (!savedData) {
+                        showToast('No saved data found');
+                        return;
+                    }
+                    
+                    const parsedData = JSON.parse(savedData);
+                    if (!validateSavedData(parsedData)) {
+                        throw new Error('Invalid data format');
+                    }
+                    
+                    state = parsedData;
+                    render();
+                    showToast('Data loaded successfully!');
+                } catch (error) {
+                    console.error('Load error:', error);
+                    showToast('Failed to load data', 'error');
+                }
+            }
+
+            function getCurrentState() {
+                return {
+                    products: getProductsData(),
+                    anglers: getAnglersData(),
+                    totals: calculateAllTotals()
+                };
+            }
+
+            function getProductsData() {
+                const products = [];
+                document.querySelectorAll('thead th:not(:first-child):not(:last-child)').forEach((th, index) => {
+                    products.push({
+                        name: th.querySelector('.product-name').value,
+                        price: th.querySelector('.product-price').value.trim() === '' ? '' : parseFloat(th.querySelector('.product-price').value),
+                        totalQty: parseInt(document.querySelectorAll('.product-total-qty')[index]?.textContent || '0')
+                    });
+                });
+                return products;
+            }
+
+            function getAnglersData() {
+                const anglers = [];
+                document.querySelectorAll('tbody tr:not(.total-row)').forEach(row => {
+                    const angler = {
+                        name: row.querySelector('.angler-name').value,
+                        quantities: [],
+                        total: parseFloat(row.querySelector('.angler-total').textContent) || 0
+                    };
+                    
+                    row.querySelectorAll('.qty').forEach(input => {
+                        angler.quantities.push({
+                            value: input.value,
+                            price: parseFloat(input.dataset.price) || 0
+                        });
+                    });
+                    
+                    anglers.push(angler);
+                });
+                return anglers;
+            }
+
+            function validateSavedData(data) {
+                return data && 
+                       Array.isArray(data.products) && 
+                       Array.isArray(data.anglers) &&
+                       typeof data.totals === 'object';
+            }
+
+            // Export functions
+            function exportToCSV() {
+                try {
+                    const headers = ['Angler Name', ...state.products.map(p => `${p.name} Qty`), 'Total'];
+                    const rows = [headers.join(',')];
+                    
+                    state.anglers.forEach(angler => {
+                        const rowData = [
+                            `"${angler.name.replace(/"/g, '""')}"`,
+                            ...angler.quantities.map(q => q.value || ''),
+                            formatNumber(angler.total, CONFIG.DECIMAL_PLACES)
+                        ];
+                        rows.push(rowData.join(','));
+                    });
+                    
+                    // Add totals row
+                    const totalsRow = ['Totals', ...state.totals.productTotals.map(t => t || ''), ''];
+                    rows.push(totalsRow.join(','));
+                    
+                    downloadFile(rows.join('\n'), 'text/csv', 'fishing_calculator.csv');
+                } catch (error) {
+                    console.error('CSV export error:', error);
+                    showToast('Failed to export CSV', 'error');
+                }
+            }
+
+            function exportToPNG() {
+                try {
+                    const container = document.createElement('div');
+                    container.style.position = 'absolute';
+                    container.style.left = '-9999px';
+                    container.style.backgroundColor = 'white';
+                    container.style.padding = '20px';
+                    container.style.borderRadius = '6px';
+                    
+                    const cloneTable = elements.table.cloneNode(true);
+                    const cloneTotal = elements.grandTotalElement.cloneNode(true);
+                    
+                    container.appendChild(cloneTable);
+                    container.appendChild(cloneTotal);
+                    document.body.appendChild(container);
+                    
+                    html2canvas(container, {
+                        scale: 2,
+                        logging: false,
+                        backgroundColor: 'white'
+                    }).then(canvas => {
+                        canvas.toBlob(blob => {
+                            downloadFile(blob, 'image/png', 'fishing_calculator.png');
+                            document.body.removeChild(container);
+                        });
+                    });
+                } catch (error) {
+                    console.error('PNG export error:', error);
+                    showToast('Failed to export PNG', 'error');
+                }
+            }
+
+            function downloadFile(data, mimeType, filename) {
+                const blob = data instanceof Blob ? data : new Blob([data], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                link.click();
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+            }
+
+            function resetCalculator() {
+                if (confirm('Are you sure you want to reset all data? This cannot be undone.')) {
+                    // Reset product names and prices to defaults
+                    const productHeaders = document.querySelectorAll('thead th:not(:first-child):not(:last-child)');
+                    CONFIG.DEFAULT_PRODUCTS.forEach((product, index) => {
+                        if (productHeaders[index]) {
+                            productHeaders[index].querySelector('.product-name').value = product.name;
+                            productHeaders[index].querySelector('.product-price').value = product.price;
+                        }
+                    });
+                    
+                    initializeState();
+                    render();
+                    showToast('Calculator reset');
+                }
+            }
+
+            // Utility functions
+            function formatNumber(value, decimals) {
+                if (value === '' || isNaN(value)) return '';
+                const num = typeof value === 'string' ? parseFloat(value) : value;
+                return num.toFixed(decimals);
+            }
+
+            function formatCurrency(value) {
+                return `${formatNumber(value, CONFIG.DECIMAL_PLACES)}${CONFIG.CURRENCY_SYMBOL}`;
+            }
+
+            function showToast(message, type = 'success') {
+                // Remove existing toast if any
+                const existingToast = document.querySelector('.toast');
+                if (existingToast) {
+                    document.body.removeChild(existingToast);
+                }
+
+                const toast = document.createElement('div');
+                toast.className = `toast ${type === 'error' ? 'error' : ''}`;
+                toast.textContent = message;
+                
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    setTimeout(() => document.body.removeChild(toast), 500);
+                }, 3000);
+            }
+
+            // Public API
+            return {
+                init: init,
+                // Expose other methods if needed for testing
+                _test: {
+                    calculateAllTotals: calculateAllTotals,
+                    formatCurrency: formatCurrency
+                }
+            };
+        })();
+
+        // Initialize the calculator
+        document.addEventListener('DOMContentLoaded', FishingCalculator.init);
+    </script>
+</body>
+</html>
